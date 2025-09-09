@@ -6,6 +6,7 @@ import { createSignal } from '@/app/actions';
 import type { SignalsFormState } from '@/types/signal';
 import styles from './create-signal.module.scss';
 import { useRouter } from 'next/navigation';
+import { USER_ID } from '@/constants';
 
 const initialState: SignalsFormState = {
   success: false,
@@ -33,12 +34,13 @@ export default function CreateSignalForm() {
     [state.errors]
   );
   const [showFeedback, setShowFeedback] = useState(false);
-
+  //ToDo formalize this for MVP user support
+  //Inlcude userId constant cretion in utils when formalizing
   useEffect(() => {
-    let stored = localStorage.getItem('creatorId');
+    let stored = localStorage.getItem(USER_ID);
     if (!stored) {
       stored = crypto.randomUUID();
-      localStorage.setItem('creatorId', stored);
+      localStorage.setItem(USER_ID, stored);
     }
     setCreatorId(stored);
   }, []);
@@ -56,7 +58,7 @@ export default function CreateSignalForm() {
       setTags('');
       setFollowUpRequired(false);
       //Implicit assumption that the view showing signals is a sibling under
-      //a shared parent server component
+      //a shared parent server
       router.refresh();
     }
   }, [isPending, state.success, router]);
