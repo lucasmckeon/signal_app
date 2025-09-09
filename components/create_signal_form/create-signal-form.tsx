@@ -71,6 +71,7 @@ export default function CreateSignalForm() {
     <div className={styles.root}>
       {/* (Optional) Link spot to mirror MyAccount’s header link */}
       <form action={formAction} aria-busy={isPending}>
+        <h3>Create New Signal</h3>
         <input type="hidden" name="creatorId" value={creatorId} />
 
         <label>
