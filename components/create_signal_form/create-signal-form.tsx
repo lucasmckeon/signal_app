@@ -5,6 +5,7 @@ import { useActionState } from 'react';
 import { createSignal } from '@/app/actions';
 import type { SignalsFormState } from '@/types/signal';
 import styles from './create-signal.module.scss';
+import { useRouter } from 'next/navigation';
 
 const initialState: SignalsFormState = {
   success: false,
@@ -19,7 +20,7 @@ export default function CreateSignalForm() {
   const [note, setNote] = useState('');
   const [tags, setTags] = useState('');
   const [followUpRequired, setFollowUpRequired] = useState(false);
-
+  const router = useRouter();
   const [state, formAction, isPending] = useActionState<
     SignalsFormState,
     FormData
@@ -54,8 +55,11 @@ export default function CreateSignalForm() {
       setNote('');
       setTags('');
       setFollowUpRequired(false);
+      //Implicit assumption that the view showing signals is a sibling under
+      //a shared parent server component
+      router.refresh();
     }
-  }, [isPending, state.success]);
+  }, [isPending, state.success, router]);
 
   const onEdit = () => setShowFeedback(false);
 
