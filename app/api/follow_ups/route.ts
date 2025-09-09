@@ -1,7 +1,6 @@
 import { sql } from '@vercel/postgres';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-//TODO do we need these?
 export const revalidate = 0;
 export const dynamic = 'force-dynamic';
 
@@ -12,19 +11,33 @@ type Row = {
   followed_up_at: string | Date;
 };
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const { searchParams } = new URL(req.url);
+  const signalId = searchParams.get('signalId');
+
   try {
-    //Return all follow up entries, followedUpAt will always have
-    //value as only signals that were followed up shows here
-    const { rows } = await sql<Row>`
-      SELECT
-        id,
-        signal_id,
-        user_id,
-        followed_up_at
-      FROM follow_ups
-      ORDER BY followed_up_at DESC;
-    `;
+    let rows: Row[] = [];
+
+    if (signalId) {
+      const result = await sql<Row>`
+        SELECT id, signal_id, user_id, followed_up_at
+        FROM follow_ups
+        WHERE signal_id = ${signalId}
+      `;
+      if (result.rowCount && result.rowCount > 1) {
+        //TODO
+        //Log to sentry that more than one row exists when there
+        //should only be one. Think more about this later
+      }
+      rows = result.rows;
+    } else {
+      const result = await sql<Row>`
+        SELECT id, signal_id, user_id, followed_up_at
+        FROM follow_ups
+        ORDER BY followed_up_at DESC;
+      `;
+      rows = result.rows;
+    }
 
     const followUps = rows.map((r) => ({
       id: r.id,

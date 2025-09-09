@@ -1,4 +1,8 @@
 'use server';
+import {
+  FollowUpActionResult,
+  FollowUpFormDataSchema,
+} from '@/types/follow_up';
 import { SignalsFormState, SignalInputSchema } from '@/types/signal';
 import { sql } from '@vercel/postgres';
 
@@ -67,3 +71,40 @@ export const createSignal = async (
     };
   }
 };
+
+export async function markAsFollowedUp(
+  _prevState: FollowUpActionResult,
+  formData: FormData
+): Promise<FollowUpActionResult> {
+  const input = {
+    signalId: formData.get('signalId'),
+    userId: formData.get('userId'),
+  };
+
+  const parseResult = FollowUpFormDataSchema.safeParse(input);
+  if (!parseResult.success) {
+    return { success: false, error: 'Invalid input.' };
+  }
+
+  const { signalId, userId } = parseResult.data;
+
+  try {
+    const { rows } = await sql<{ id: string; followed_up_at: Date }>`
+      INSERT INTO follow_ups (signal_id, user_id)
+      VALUES (${signalId}, ${userId})
+      ON CONFLICT (signal_id) DO NOTHING
+      RETURNING id;
+    `;
+
+    if (rows.length === 0) {
+      return {
+        success: false,
+        error: 'Follow-up already logged by another user.',
+      };
+    }
+    return { success: true };
+  } catch (error) {
+    console.error('markAsFollowedUp error:', error);
+    return { success: false, error: 'Database error.' };
+  }
+}
